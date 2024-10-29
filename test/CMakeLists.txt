@@ -49,4 +49,4 @@ include(GoogleTest)
 gtest_discover_tests(UbuntuReleaseFetcherTest)
 
 # Copy test data to binary directory.
-file(COPY testData/UbuntuReleaseInfo.json DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/testData)
+file(COPY testData DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

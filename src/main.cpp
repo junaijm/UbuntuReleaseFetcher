@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
         std::cout << cliDescription << std::endl;
         return 0;
     }
-    else
+    else if(argMap.count("versions") || argMap.count("checksum") || argMap.count("ltsRelease"))
     {
         // Initialize UbuntuReleaseFetcher. This is required for all commands.
         const std::string host = "cloud-images.ubuntu.com";
@@ -67,13 +67,13 @@ int main(int argc, char* argv[])
             std::string versionName = argMap["checksum"].as<std::string>();
             std::string packageChecksum;
             if (ubuntuReleaseFetcher.GetPackageFileInfo(versionName,
-                "disk1.img",
-                "sha256", packageChecksum))
+                                                        "disk1.img",
+                                                        "sha256", packageChecksum))
             {
                 std::cout << "[sha256] of [disk1.img] of <" << versionName << "> is: " << packageChecksum << std::endl;
             }
         }
-        else if (argMap.count("ltsRelease"))
+        else // if (argMap.count("ltsRelease"))
         {
             std::string ltsRelease;
             if (ubuntuReleaseFetcher.GetCurrentLTSRelease("amd64", ltsRelease))
@@ -81,10 +81,10 @@ int main(int argc, char* argv[])
                 std::cout << "LTS release for [amd64] architecture is: " << ltsRelease << std::endl;
             }
         }
-        else
-        {
-            std::cout << "Invalid input.!" << std::endl << cliDescription << std::endl;
-        }
+    }
+    else
+    {
+        std::cout << "Invalid input.!" << std::endl << cliDescription << std::endl;
     }
 
     return 0;

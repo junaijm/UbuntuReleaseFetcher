@@ -9,9 +9,9 @@ public:
     FileLogger(std::string fileFullPath, bool enableConsoleLog);
     virtual ~FileLogger();
 
-    void LogInfo(std::string logText)        override;
-    void LogWarning(std::string logText)     override;
-    void LogError(std::string logText)       override;
+    void LogInfo(const std::string& logText)        override;
+    void LogWarning(const std::string& logText)     override;
+    void LogError(const std::string& logText)       override;
 
 private:
     std::ofstream LogFile;

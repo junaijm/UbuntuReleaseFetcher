@@ -13,8 +13,8 @@
 /// <param name="logger">logger instance for diagnostic logging</param>
 /// <param name="httpClient">http client instance to be used for HTTP GET</param>
 UbuntuReleaseFetcher::UbuntuReleaseFetcher(
-    std::string host,
-    std::string target,
+    const std::string& host,
+    const std::string& target,
     std::shared_ptr<ILogger> logger,
     std::shared_ptr<IHttpClient> httpClient)
     : 

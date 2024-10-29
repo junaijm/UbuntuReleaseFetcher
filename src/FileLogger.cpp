@@ -13,7 +13,7 @@ FileLogger::~FileLogger()
     LogFile.close();
 }
 
-void FileLogger::LogInfo(std::string logText)
+void FileLogger::LogInfo(const std::string& logText)
 {
     if (LogFile.is_open())
     {
@@ -26,7 +26,7 @@ void FileLogger::LogInfo(std::string logText)
     }
 }
 
-void FileLogger::LogWarning(std::string logText)
+void FileLogger::LogWarning(const std::string& logText)
 {
     if (LogFile.is_open())
     {
@@ -39,7 +39,7 @@ void FileLogger::LogWarning(std::string logText)
     }
 }
 
-void FileLogger::LogError(std::string logText)
+void FileLogger::LogError(const std::string& logText)
 {
     if (LogFile.is_open())
     {

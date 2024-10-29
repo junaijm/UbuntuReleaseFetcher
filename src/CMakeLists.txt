@@ -8,8 +8,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
-file(GLOB SOURCES "*.cpp")
-add_executable(UbuntuReleaseFetcher ${SOURCES})
+# Set output directories for binaries
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin)
+
+add_executable(UbuntuReleaseFetcher BoostHttpClient.cpp FileLogger.cpp main.cpp UbuntuReleaseFetcher.cpp UbuntuReleaseInfo.cpp)
 
 # Download and extract the boost library from GitHub
 message(STATUS "Downloading and extracting boost library sources. This will take some time...")

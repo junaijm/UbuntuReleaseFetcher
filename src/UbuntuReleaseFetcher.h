@@ -11,10 +11,10 @@ class UbuntuReleaseInfo;
 class UbuntuReleaseFetcher : public IReleaseFetcher
 {
 public:
-    UbuntuReleaseFetcher(std::string host,
-                       std::string target, 
-                       std::shared_ptr<ILogger> logger,
-                       std::shared_ptr<IHttpClient> httpClient);
+    UbuntuReleaseFetcher(const std::string& host,
+                         const std::string& target, 
+                         std::shared_ptr<ILogger> logger,
+                         std::shared_ptr<IHttpClient> httpClient);
     virtual ~UbuntuReleaseFetcher();
 
     // Implement IImageFetcher methods

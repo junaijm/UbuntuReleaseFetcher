@@ -23,7 +23,7 @@ FetchContent_Declare(
     DOWNLOAD_NO_EXTRACT FALSE
 )
 FetchContent_MakeAvailable(Boost)
-target_link_libraries(UbuntuReleaseFetcher PUBLIC Boost::json Boost::beast)
+target_link_libraries(UbuntuReleaseFetcher PUBLIC Boost::json Boost::beast Boost::program_options)
 
 #find_package(OpenSSL REQUIRED)
 #target_link_libraries(UbuntuReleaseFetcher PUBLIC OpenSSL::SSL)

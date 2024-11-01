@@ -15,7 +15,8 @@ int main(int argc, char* argv[])
         ("help", "Displays help message")
         ("versions", "Print all supported Ubuntu versions for [amd64] architecture")
         ("checksum", BoostOptions::value<std::string>(), "Print checksum[sha256] of [disk1.img] for given release version")
-        ("ltsRelease", "Print LTS release for [amd64] architecture");
+        ("ltsrelease", "Print LTS release for [amd64] architecture")
+        ("consolelog", "Enables logging on console");
 
     BoostOptions::variables_map argMap;
     try
@@ -30,12 +31,18 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    bool logToConsole = false;
+    if (argMap.count("consolelog"))
+    {
+        logToConsole = true;
+    }
+
     if (argMap.count("help")) 
     {
         std::cout << cliDescription << std::endl;
         return 0;
     }
-    else if(argMap.count("versions") || argMap.count("checksum") || argMap.count("ltsRelease"))
+    else if(argMap.count("versions") || argMap.count("checksum") || argMap.count("ltsrelease"))
     {
         // Initialize UbuntuReleaseFetcher. This is required for all commands.
         const std::string host = "cloud-images.ubuntu.com";
@@ -45,14 +52,16 @@ int main(int argc, char* argv[])
         const std::string tempLogPath = tempDir.string() + "UbuntuReleaseFetcherLogs.txt";
         std::cout << "Initializing file logger with path [" << tempLogPath << "]" << std::endl;
 
-        auto logger = std::make_shared<FileLogger>(tempLogPath, true);
-        auto httpClient = std::make_shared<BoostHttpClient>();
+        auto logger = std::make_shared<FileLogger>(tempLogPath, logToConsole);
+        auto httpClient = std::make_shared<BoostHttpClient>(logger);
 
         UbuntuReleaseFetcher ubuntuReleaseFetcher(host, target, logger, httpClient);
 
         if (argMap.count("versions"))
         {
             std::vector<std::string> supportedVersions;
+            // Though the fetcher supports querying supported versions for all architectures, 
+            // application uses "GetSupportedVersions" for "amd64" architecture alone. Hence hardcoded the input.
             if (ubuntuReleaseFetcher.GetSupportedVersions("amd64", supportedVersions))
             {
                 std::cout << "Supported versions for [amd64] achitectrue are:" << std::endl;
@@ -66,6 +75,9 @@ int main(int argc, char* argv[])
         {
             std::string versionName = argMap["checksum"].as<std::string>();
             std::string packageChecksum;
+
+            // Though the fetcher supports querying of different file info, 
+            // application uses "GetPackageFileInfo" for fetching "sha256" of "disk1.img". Hence hardcoded the input.
             if (ubuntuReleaseFetcher.GetPackageFileInfo(versionName,
                                                         "disk1.img",
                                                         "sha256", packageChecksum))
@@ -73,9 +85,11 @@ int main(int argc, char* argv[])
                 std::cout << "[sha256] of [disk1.img] of <" << versionName << "> is: " << packageChecksum << std::endl;
             }
         }
-        else // if (argMap.count("ltsRelease"))
+        else // if (argMap.count("ltsrelease"))
         {
             std::string ltsRelease;
+            // Though the fetcher supports querying LTS for all architectures, 
+            // application uses "GetCurrentLTSRelease" for "amd64" architecture alone. Hence hardcoded the input.
             if (ubuntuReleaseFetcher.GetCurrentLTSRelease("amd64", ltsRelease))
             {
                 std::cout << "LTS release for [amd64] architecture is: " << ltsRelease << std::endl;

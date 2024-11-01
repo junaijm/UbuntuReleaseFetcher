@@ -1,8 +1,9 @@
-#include <iostream>
-#include <fstream>
-#include <filesystem>
+#include <chrono>
+#include <sstream>
 
 #include "UbuntuReleaseFetcher.h"
+#include "ILogger.h"
+#include "IHttpClient.h"
 #include "UbuntuReleaseInfo.h"
 
 /// <summary>
@@ -18,28 +19,38 @@ UbuntuReleaseFetcher::UbuntuReleaseFetcher(
     std::shared_ptr<ILogger> logger,
     std::shared_ptr<IHttpClient> httpClient)
     : 
-    HostName(host),
-    TargetPath(target),
     Logger(logger),
     HttpClient(httpClient),
     ReleaseInfo(std::make_shared<UbuntuReleaseInfo>(logger))
 {
-    // Download release information JSON to local system for parsing.
-    // Use temp folder as download destination.
-    auto tempDir = std::filesystem::temp_directory_path();
-    const std::string tempJsonPath = tempDir.string() + "UbuntuReleaseInfo.json";
-    Logger->LogInfo("Downloading UbuntuReleaseInfo to " + tempJsonPath);
-    
-    if (HttpClient->DownloadFile(HostName, TargetPath, tempJsonPath))
-    {
-        if (!ReleaseInfo->LoadReleaseInfoFromFile(tempJsonPath))
+    Logger->LogInfo("Fetching UbuntuReleaseInfo from [" + host + target + "]");
+
+    // Download release information JSON and populate internal data structure for all supported versions.
+    auto startOfDownload = std::chrono::high_resolution_clock::now();
+
+    auto downloadStatus = ReleaseInfo->BeginParse();   
+    downloadStatus = downloadStatus ? HttpClient->DownloadFile(host, target,
+        [&](const std::string& fileData, const size_t dataSize) -> bool
         {
-            Logger->LogError("Failed to parse UbuntuReleaseInfo");
-        }
+            return ReleaseInfo->ParseReleaseInfo(fileData, dataSize);
+        }) : downloadStatus;
+    downloadStatus = downloadStatus ? ReleaseInfo->EndParse() : downloadStatus;
+
+    if (!downloadStatus)
+    {
+        Logger->LogError("Failed to download UbuntuReleaseInfo");
     }
     else
     {
-        Logger->LogError("Failed to download UbuntuReleaseInfo");
+        auto endOfDownload = std::chrono::high_resolution_clock::now();
+        auto timeTakenForDownload = endOfDownload - startOfDownload;
+
+        Logger->LogInfo("UbuntuReleaseInfo downloaded successfully.");
+
+        std::stringstream perfData;
+        perfData << "Time taken for downloading UbuntuReleaseInfo is : "
+                 << std::chrono::duration_cast<std::chrono::milliseconds>(endOfDownload - startOfDownload).count() << " milliseconds";
+        Logger->LogInfo(perfData.str());
     }
 }
 

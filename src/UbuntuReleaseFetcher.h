@@ -1,11 +1,11 @@
 #pragma once
-
 #include <memory>
 
 #include "IReleaseFetcher.h"
-#include "ILogger.h"
-#include "IHttpClient.h"
 
+// Forward declarations.
+class ILogger;
+class IHttpClient;
 class UbuntuReleaseInfo;
 
 class UbuntuReleaseFetcher : public IReleaseFetcher
@@ -28,8 +28,6 @@ public:
                             std::string& fileInfo)                              override;
 
 private:
-    std::string HostName;
-    std::string TargetPath;
     std::shared_ptr<ILogger> Logger;
     std::shared_ptr<IHttpClient> HttpClient;
     std::shared_ptr<UbuntuReleaseInfo> ReleaseInfo;

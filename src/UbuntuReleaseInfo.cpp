@@ -1,6 +1,3 @@
-#include <iostream>
-#include <fstream>
-
 #include "UbuntuReleaseInfo.h"
 #include "ILogger.h"
 
@@ -10,7 +7,9 @@ namespace json = boost::json;
 /// Constructor.
 /// </summary>
 /// <param name="logger">Logger instance to be used for diagnostic logging</param>
-UbuntuReleaseInfo::UbuntuReleaseInfo(std::shared_ptr<ILogger> logger) : Logger(logger)
+UbuntuReleaseInfo::UbuntuReleaseInfo(std::shared_ptr<ILogger> logger) : Logger(logger), 
+                                     JsonParser(), 
+                                     Initialized(false)
 {
 }
 
@@ -22,21 +21,73 @@ UbuntuReleaseInfo::~UbuntuReleaseInfo()
 }
 
 /// <summary>
-/// Function to fill internal data structure with Ubuntu release information.
+/// Prepare stream parser for parsing Json string.
 /// </summary>
-/// <param name="releaseInfoFile">Source file where release information is stored</param>
 /// <returns>true, if successful</returns>
-bool UbuntuReleaseInfo::LoadReleaseInfoFromFile(const std::string& releaseInfoFile)
+bool UbuntuReleaseInfo::BeginParse()
 {
-    boost::json::value releaseInfoJson;
-    if (!loadReleaseInfoFileToJson(releaseInfoFile, releaseInfoJson) || 
-        !populateSupportedReleases(releaseInfoJson))
+    try
     {
-        Logger->LogError("Failed to parse UbuntuReleaseInfoFile. ");
+        JsonParser.reset(); // Reset parser and release memory.
+        return true;
+    }
+    catch (const std::exception& exceptionObj)
+    {
+        Logger->LogError("Exception caught in UbuntuReleaseInfo::BeginParse.");
+        Logger->LogError("Exception text: " + std::string(exceptionObj.what()));
+        return false;
+    }
+}
+
+/// <summary>
+/// Write data stream in to stream parser. 
+/// This function will be called multiple times while parsing release info
+/// </summary>
+/// <param name="dataStream">string containing release info</param>
+/// <param name="dataSize">size of the data in dataStream</param>
+/// <returns>true, if successful</returns>
+bool UbuntuReleaseInfo::ParseReleaseInfo(const std::string& dataStream, const size_t dataSize)
+{
+    try
+    {
+        return (0 < JsonParser.write(dataStream.data(), dataSize)); // Pass data to parser in chunks
+    }
+    catch (const std::exception& exceptionObj)
+    {
+        Logger->LogError("Exception caught in UbuntuReleaseInfo::ParseReleaseInfo.");
+        Logger->LogError("Exception text: " + std::string(exceptionObj.what()));
+        return false;
+    }
+}
+
+/// <summary>
+/// Function to finalize Json parsing.
+/// This function finalizes Json parsing and populate internal data structure with finalized json object.
+/// 
+/// Note: This function should be called at the end of parsing.
+/// </summary>
+/// <returns>true, if successful</returns>
+bool UbuntuReleaseInfo::EndParse()
+{
+    try
+    {
+        JsonParser.finish();
+        if (JsonParser.done())
+        {
+            boost::json::value jsonObj;
+            jsonObj = JsonParser.release(); // Retrieve JSON object from parser.
+            Initialized = populateSupportedReleases(jsonObj);
+            return Initialized;
+        }
+    }
+    catch (const std::exception& exceptionObj)
+    {
+        Logger->LogError("Exception caught in UbuntuReleaseInfo::EndParse.");
+        Logger->LogError("Exception text: " + std::string(exceptionObj.what()));
         return false;
     }
 
-    return true;
+    return false;
 }
 
 /// <summary>
@@ -49,6 +100,12 @@ bool UbuntuReleaseInfo::GetSupportedVersions(const std::string& architecture, st
 {
     try
     {
+        if (!Initialized)
+        {
+            Logger->LogError("ReleaseInfo not initialized");
+            return false;
+        }
+
         for (auto const& supportedRelease : SupportedReleases)
         {
             if (architecture == "*" || supportedRelease.architecture == architecture)
@@ -80,21 +137,43 @@ bool UbuntuReleaseInfo::GetCurrentLTSRelease(const std::string& architecture, st
 {
     try
     {
-        // Filter the LTS releaess for given architecture.
-        // Filtering is done based on the releaseTitle.
-        decltype(SupportedReleases) filteredVector;
-        std::copy_if(SupportedReleases.begin(), SupportedReleases.end(), std::back_inserter(filteredVector), [&](const ProductInfo& releaseInfo)
-            {
-                return (architecture == releaseInfo.architecture && std::string::npos != releaseInfo.releaseTitle.find("LTS"));
-            });
+        if (!Initialized)
+        {
+            Logger->LogError("ReleaseInfo not initialized");
+            return false;
+        }
 
-        // Sort (in Ascending order) the filtered vector to find longest supported LTS release.
-        std::sort(filteredVector.begin(), filteredVector.end(), [&](const ProductInfo& lhs, const ProductInfo& rhs)
+        int ltsEndOfSuppot = 0;
+        for (auto& releaseInfo : SupportedReleases)
+        {
+            int releaseEndOfSupport = dateStringToComparableInt(releaseInfo.endOfSupport);
+            if ((architecture == releaseInfo.architecture) && 
+                (std::string::npos != releaseInfo.releaseTitle.find("LTS")) &&
+                (ltsEndOfSuppot < releaseEndOfSupport))
             {
-                return dateStringToComparableInt(lhs.endOfSupport) > dateStringToComparableInt(rhs.endOfSupport);
-            });
+                ltsEndOfSuppot = releaseEndOfSupport;
+                ltsRelease = releaseInfo.releaseTitle;
+            }
+        }
 
-        ltsRelease = filteredVector[0].releaseTitle;
+        //// Filter the LTS releaess for given architecture.
+        //// Filtering is done based on the releaseTitle.
+        //decltype(SupportedReleases) filteredVector;
+        //std::copy_if(SupportedReleases.begin(), SupportedReleases.end(), std::back_inserter(filteredVector), [&](const ProductInfo& releaseInfo)
+        //    {
+        //        return (architecture == releaseInfo.architecture && std::string::npos != releaseInfo.releaseTitle.find("LTS"));
+        //    });
+
+        //// Sort (in Ascending order) the filtered vector to find longest supported LTS release.
+        //std::sort(filteredVector.begin(), filteredVector.end(), [&](const ProductInfo& lhs, const ProductInfo& rhs)
+        //    {
+        //        return dateStringToComparableInt(lhs.endOfSupport) > dateStringToComparableInt(rhs.endOfSupport);
+        //    });
+        
+        //if (filteredVector.size() > 0)
+        //{
+        //    ltsRelease = filteredVector[0].releaseTitle;
+        //}
     }
     catch (const std::exception& exceptionObj)
     {
@@ -121,6 +200,12 @@ bool UbuntuReleaseInfo::GetPackageFileInfo(const std::string& versionName, const
 {
     try
     {
+        if(!Initialized)
+        {
+            Logger->LogError("ReleaseInfo not initialized");
+            return false;
+        }
+
         VersionInfo versionToFind{ versionName, {} };
         FileInfo fileToFind{ fileName, "" };
         for (auto const& supportedRelease : SupportedReleases)
@@ -145,7 +230,7 @@ bool UbuntuReleaseInfo::GetPackageFileInfo(const std::string& versionName, const
             }
             else
             {
-                Logger->LogWarning("Querying of file info {" + infoTag + "} is not supported at the moment.");
+                Logger->LogWarning("Querying of file info (" + infoTag + ") is not supported at the moment.");
                 return false;
             }
         }
@@ -166,61 +251,13 @@ bool UbuntuReleaseInfo::GetPackageFileInfo(const std::string& versionName, const
 }
 
 /// <summary>
-/// Function to load Ubuntu release information file in to a JSON object.
-/// Function uses stream_parser from Boost::json library for parsing JSON file.
-/// </summary>
-/// <param name="releaseInfoFile">Source file path where JSON data is stored</param>
-/// <param name="jsonObj">OutParam: Resultant JSON object</param>
-/// <returns>true, if successful</returns>
-bool UbuntuReleaseInfo::loadReleaseInfoFileToJson(const std::string& releaseInfoFile, boost::json::value& jsonObj)
-{
-    try
-    {
-        std::ifstream imageInfoFile(releaseInfoFile, std::ios::in | std::ios::binary);
-        if (!imageInfoFile.is_open())
-        {
-            Logger->LogError("Could not open releaseInfoFile : " + releaseInfoFile);
-            return false;
-        }
-
-        const int CHUNK_SIZE_FOR_PARSING = 18 * 1024; // 10 KB
-        std::string readBuffer(CHUNK_SIZE_FOR_PARSING, '\0');
-
-        json::stream_parser jsonParser;
-        while (imageInfoFile.read(&readBuffer[0], readBuffer.size()) || imageInfoFile.gcount() > 0)
-        {
-            jsonParser.write(readBuffer.data(), imageInfoFile.gcount()); // Pass data to parser in chunks
-        }
-
-        jsonParser.finish();
-        if (jsonParser.done())
-        {
-            jsonObj = jsonParser.release(); // Retrieve JSON object from parser.
-        }
-        jsonParser.reset(); // Reset parser and release memory.
-    }
-    catch (const boost::system::system_error& boostException)
-    {
-        Logger->LogError("BoostException caught in UbuntuReleaseInfo::loadReleaseInfoFileToJson.");
-        Logger->LogError("Exception text: " + std::string(boostException.what()));
-        return false;
-    }
-    catch (const std::exception& exceptionObj)
-    {
-        Logger->LogError("Exception caught in UbuntuReleaseInfo::loadReleaseInfoFileToJson.");
-        Logger->LogError("Exception text: " + std::string(exceptionObj.what()));
-        return false;
-    }
-
-    return true;
-}
-
-/// <summary>
 /// Function to iterate through JSON object and populate internal data structure for all supported Ubuntu versions.
 /// Function skips the versions that are already out of support.
 /// 
 /// Assumption: Function assumes that JSON data adhere to Simplestream format and all required feilds are available.
 ///             Hence validation of input data is not performed.
+///             Error in format will result in exception, which will be handled in catch block.
+/// 
 /// </summary>
 /// <param name="releaseInfoJson">JSON object of all available Ubuntu releases</param>
 /// <returns>true, if successful</returns>
@@ -276,6 +313,7 @@ bool UbuntuReleaseInfo::populateSupportedReleases(boost::json::value releaseInfo
         return false;
     }
 
+    Initialized = true;
     return true;
 }
 

@@ -37,6 +37,7 @@ struct ProductInfo
 };
 
 class ILogger;
+
 class UbuntuReleaseInfo
 {
 public:
@@ -44,17 +45,21 @@ public:
     UbuntuReleaseInfo(std::shared_ptr<ILogger> logger);
     virtual ~UbuntuReleaseInfo();
 
-    bool LoadReleaseInfoFromFile(const std::string& releaseInfoFile);
+    bool BeginParse();
+    bool ParseReleaseInfo(const std::string& jsonString, const size_t dataSize);
+    bool EndParse();
+
     bool GetSupportedVersions(const std::string& architecture, std::vector<std::string>& supportedVersions);
     bool GetCurrentLTSRelease(const std::string& architecture, std::string& ltsRelease);
     bool GetPackageFileInfo(const std::string& versionName, const std::string& fileName, const std::string& infoTag, std::string& fileInfo);
 
 private:
-    bool loadReleaseInfoFileToJson(const std::string& releaseInfoFile, boost::json::value& jsonObj);
     bool populateSupportedReleases(boost::json::value jsonObj);
     int dateStringToComparableInt(const std::string& dateString);
 
 private:
     std::shared_ptr<ILogger> Logger;
+    boost::json::stream_parser JsonParser;
+    bool Initialized;
     std::vector<ProductInfo> SupportedReleases;
 };

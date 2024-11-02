@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
         const std::string target = "/releases/streams/v1/com.ubuntu.cloud:released:download.json";
 
         auto tempDir = std::filesystem::temp_directory_path();
-        const std::string tempLogPath = tempDir.string() + "UbuntuReleaseFetcherLogs.txt";
+        const std::string tempLogPath = tempDir.string() + "/UbuntuReleaseFetcherLogs.txt";
         std::cout << "Initializing file logger with path [" << tempLogPath << "]" << std::endl;
 
         auto logger = std::make_shared<FileLogger>(tempLogPath, logToConsole);

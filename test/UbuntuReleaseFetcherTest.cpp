@@ -4,7 +4,7 @@
 #include <memory>
 #include <fstream>
 
-#include "..\src\UbuntuReleaseFetcher.h"
+#include "../src/UbuntuReleaseFetcher.h"
 #include "MockHttpClient.h"
 #include "MockLogger.h"
 
@@ -56,7 +56,7 @@ protected:
     const std::string Host = "cloud-images.ubuntu.com";
     const std::string Target = "/releases/streams/v1/com.ubuntu.cloud:released:download.json";
     const std::string TempJsonPath = std::filesystem::temp_directory_path().string() + "UbuntuReleaseInfo.json";
-    const std::string TestDataDir = std::filesystem::current_path().string() + "\\testData\\";
+    const std::string TestDataDir = std::filesystem::current_path().string() + "/testData/";
 };
 
 TEST_F(UbuntuReleaseFetcherTest, LoadValidReleaseInfo) 

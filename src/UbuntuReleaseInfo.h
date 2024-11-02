@@ -2,6 +2,7 @@
 #include <boost/json.hpp>
 
 #include <string>
+#include <memory>
 
 // Structure to hold important release informations.
 struct FileInfo

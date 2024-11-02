@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
-cmake_policy(SET CMP0167 NEW)
-cmake_policy(SET CMP0144 NEW)
 
 project(UbuntuReleaseFetcher)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+#set(CMAKE_COMPILE_WARNING_AS_ERROR ON) - Commented due to some of the Boost library build failure.
 
 # Set output directories for binaries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
@@ -29,5 +27,5 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Boost)
 target_link_libraries(UbuntuReleaseFetcher PUBLIC Boost::json Boost::beast Boost::program_options)
 
-#find_package(OpenSSL REQUIRED)
-#target_link_libraries(UbuntuReleaseFetcher PUBLIC OpenSSL::SSL)
+find_package(OpenSSL REQUIRED)
+target_link_libraries(UbuntuReleaseFetcher PUBLIC OpenSSL::SSL)

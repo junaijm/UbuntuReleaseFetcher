@@ -6,7 +6,31 @@
 class MockLogger : public ILogger
 {
 public:
-    MOCK_METHOD(void, LogInfo, (const std::string& logText));
-    MOCK_METHOD(void, LogWarning, (const std::string& logText));
-    MOCK_METHOD(void, LogError, (const std::string& logText));
+    void LogInfo(const std::string& logText)
+    {
+        LogsCollected.push_back(logText);
+    }
+
+    void LogWarning(const std::string& logText)
+    {
+        LogsCollected.push_back(logText);
+    }
+
+    void LogError(const std::string& logText)
+    {
+        LogsCollected.push_back(logText);
+    }
+
+    bool IsLogPresent(const std::string& logToSearch)
+    {
+        return(LogsCollected.end() != std::find(LogsCollected.begin(), LogsCollected.end(), logToSearch));
+    }
+
+    void ClearLogs()
+    {
+        LogsCollected.clear();
+    }
+
+private:
+    std::vector<std::string> LogsCollected;
 };

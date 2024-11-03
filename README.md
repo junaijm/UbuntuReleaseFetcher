@@ -1,27 +1,86 @@
 # UbuntuReleaseFetcher
-Utility to fetch information about Ubuntu releases
 
-# Key functions:
- - Query all Ubuntu releases for a given architecture which are currently in support
- - Query current LTS release for a given architecture
- - Query checksum (sha256) of a package file (disk1.img) for a given release
+**UbuntuReleaseFetcher** is a utility to fetch detailed information about Ubuntu releases.
 
-# Design approach:
-Below class diagram dipicts important classes. 
+## Key Features
 
-![image](https://github.com/user-attachments/assets/f475d271-ad09-469a-8db3-e4c355658a82)
+- **Fetch Supported Ubuntu Releases**: Retrieves all Ubuntu releases for a specified architecture that are currently in support.
+- **Get Current LTS Release**: Queries the current LTS (Long-Term Support) release for a specified architecture.
+- **Retrieve File Checksum**: Obtains the SHA-256 checksum of a specific package file (`disk1.img`) for a given release.
 
-**Main:**
-Acts as entry point and handles the user requests via command-line input. Main uses UbuntuReleaseFetcher to fetch the required information. 
+---
 
-**UbuntuReleaseFetcher:**
-Implements IReleaseFetcher and serves as the primary fetcher of Ubuntu release data. It depends on both IHttpClient and UbuntuReleaseInfo for fetching and structuring data. It also depends on ILogger for logging diagnostic data.
+## Design Overview
 
-**UbuntuReleaseInfo:**
-Acts as a data structure or model to hold release information. It uses Boost-json for structuring the data.
+### Class Diagram
 
-**BoostHttpClient:**
-Implements IHttpClient and utilizes the Boost-beast library for getting release infomation from remote host via HTTP GET.
+The diagram below outlines the main components of the utility:
 
-**FileLogger:**
-Implements ILogger and is responsible for logging diagnostic logs to a file.
+![UbuntuReleaseFetcher Class Diagram](https://github.com/user-attachments/assets/f475d271-ad09-469a-8db3-e4c355658a82)
+
+### Core Components
+
+- **Main**: The entry point of the application, handling user requests via command-line input. `Main` uses `UbuntuReleaseFetcher` to provide the required information.
+  
+- **UbuntuReleaseFetcher**: Implements `IReleaseFetcher` as the primary fetcher of Ubuntu release data. It depends on `IHttpClient` for HTTP requests, `UbuntuReleaseInfo` for structuring data, and `ILogger` for diagnostic logging.
+
+- **UbuntuReleaseInfo**: A data model to hold release information, leveraging Boost's JSON library for parsing the data.
+
+- **BoostHttpClient**: Implements `IHttpClient`, uses Boost.Beast library to fetch release information from a remote server via HTTP GET.
+
+- **FileLogger**: Implements `ILogger`, handling diagnostic logs written to a file.
+
+---
+
+## Build and Installation Guide
+
+### Prerequisites
+
+Ensure the following tools are installed on your system:
+
+1. **CMake**
+2. **Visual Studio** _(Windows only)_ or **g++, build-essential** _(Linux/Mac)_
+3. **Git**
+4. **OpenSSL**
+
+### Building the Project
+
+1. **Clone the Repository**
+
+   ```
+   git clone https://github.com/junaijm/UbuntuReleaseFetcher.git
+   ```
+2. **Create a build directory**
+   ```
+   cd UbuntuReleaseFetcher
+   mkdir build
+   cd build
+   ```
+3. **Set OpenSSL Root**
+   
+   **Windows**
+   ```
+   set OPENSSL_ROOT=<OpenSSL root folder>
+   ```
+   ***Linux/Mac***
+   ```
+   export OPENSSL_ROOT=<OpenSSL root folder>
+   ```
+5. **Generate build files and execute build**
+   ```
+   cmake ..
+   cmake --build .
+   ```
+### Run the tests
+   Change directory to ``<root>/bin`` and execute test suit executable (``UbuntuReleaseFetcherTest``)
+   
+   **Windows**
+   ```
+   cd ../bin
+   UbuntuReleaseFetcherTest.exe
+   ```
+   **Linux/Mac**
+   ```
+   cd ../bin
+   ./UbuntuReleaseFetcherTest
+   ```
